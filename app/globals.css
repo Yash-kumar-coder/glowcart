@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-fraunces), "Georgia", serif;
+}
+
+@theme {
+  /* Warm skincare-brand palette: cream, parchment, blush, clay, deep green */
+  --color-cream: #faf5ed;
+  --color-parchment: #f3ebdc;
+  --color-sand: #e7dac6;
+  --color-blush: #efc9b8;
+  --color-clay: #b4654a;
+  --color-clay-dark: #9a5138;
+  --color-forest: #1f3d2b;
+  --color-pine: #2f5d46;
+  --color-moss: #6c8a72;
+  --color-ink: #2b2620;
+  --color-gold: #c99b3f;
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-up-late: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  --animate-scanline: scanline 2.2s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scanline {
+  0%,
+  100% {
+    top: 6%;
+  }
+  50% {
+    top: 90%;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-blush);
+  color: var(--color-forest);
+}
