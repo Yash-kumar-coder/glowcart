@@ -39,33 +39,33 @@ export interface AdvisorReport {
 /** Short consequence clause per concern, used in the personal summary. */
 const CONCERN_CLAUSE: Record<string, string> = {
   moisture:
-    "your barrier is losing water faster than it should, which quietly makes every other concern look worse",
+    "your barrier is losing water faster than it should",
   dark_circle:
-    "the under-eye area is showing fatigue and thin-skin shadowing",
-  pore: "pores are stretched by oil and debris, so they read larger than they are",
-  wrinkle: "fine lines are starting to set in where collagen is thinning",
-  radiance: "dead-cell buildup is dulling the light your skin reflects",
-  oiliness: "sebum is running high, especially through the T-zone",
-  texture: "the surface is uneven, so light — and makeup — sit patchily on it",
-  redness: "the barrier is stressed and flushing more easily than it should",
-  eye_bag: "fluid is pooling under the eyes, most likely from sleep and salt",
-  age_spot: "sun-driven pigmentation is accumulating faster than it fades",
-  acne: "pores are clogging and inflaming into active breakouts",
-  firmness: "elasticity is slipping as collagen support weakens",
+    "fatigue and thin-skin shadowing under the eyes",
+  pore: "pores stretched by oil and debris",
+  wrinkle: "fine lines setting in as collagen thins",
+  radiance: "dead-cell buildup dulling your skin",
+  oiliness: "sebum running high through the T-zone",
+  texture: "an uneven surface makeup sits patchily on",
+  redness: "a stressed barrier that flushes easily",
+  eye_bag: "fluid pooling under the eyes",
+  age_spot: "sun pigmentation building faster than it fades",
+  acne: "pores clogging into active breakouts",
+  firmness: "elasticity slipping as collagen weakens",
 };
 
 const STEP_INSTRUCTION: Record<string, string> = {
   cleanse:
-    "Massage in with lukewarm water for 30–60 seconds, then pat — never rub — dry.",
-  tone: "Press into skin with your palms (skip the cotton pad). Two thin layers beat one thick one.",
+    "Massage with lukewarm water, 30–60 seconds. Pat dry.",
+  tone: "Press in with palms. Two thin layers.",
   treat:
-    "Apply 2–3 drops to slightly damp skin and give it 60 seconds before the next layer.",
-  eye: "A rice-grain amount per eye, tapped with your ring finger along the orbital bone — never rubbed in.",
+    "2–3 drops on damp skin. Wait 60 seconds.",
+  eye: "A rice-grain per eye, tapped with your ring finger.",
   moisturize:
-    "A pea-sized amount over face and neck, pressed in to seal the layers beneath.",
+    "A pea-sized amount over face and neck.",
   protect:
-    "Two finger-lengths, applied last in the morning. Reapply every 2 hours outdoors.",
-  base: "Wait 2 minutes after SPF, then blend your matched foundation from the centre of the face outward.",
+    "Two finger-lengths, last in the morning. Reapply outdoors every 2 hours.",
+  base: "Two minutes after SPF, blend from the centre outward.",
 };
 
 const money = (n: number) =>
@@ -76,10 +76,10 @@ const money = (n: number) =>
   });
 
 function scoreBand(overall: number): string {
-  if (overall >= 80) return "that's strong, well-looked-after skin";
-  if (overall >= 65) return "that's solidly healthy skin with a few clear priorities";
-  if (overall >= 50) return "that's fair skin with real, fixable room to improve";
-  return "your skin is clearly asking for help right now";
+  if (overall >= 80) return "strong, well-kept skin";
+  if (overall >= 65) return "healthy skin, a few clear priorities";
+  if (overall >= 50) return "fair skin, with fixable room to improve";
+  return "skin asking for help";
 }
 
 export function buildAdvisorReport(args: {
@@ -96,21 +96,21 @@ export function buildAdvisorReport(args: {
   const strongest = skin.concerns[skin.concerns.length - 1];
 
   /* ------------------------- personal summary ------------------------- */
-  const s1 = `Your overall skin score is ${skin.overallScore}/100 — ${scoreBand(skin.overallScore)}.`;
+  const s1 = `Skin score ${skin.overallScore}/100 — ${scoreBand(skin.overallScore)}.`;
   const s2 = weakest
-    ? ` The headline issue is ${weakest.label.toLowerCase()} at ${weakest.score}/100: ${
+    ? ` Priority: ${weakest.label.toLowerCase()} at ${weakest.score}/100 — ${
         CONCERN_CLAUSE[weakest.id] ?? weakest.explanation
-      }${second ? `, with ${second.label.toLowerCase()} (${second.score}/100) close behind` : ""}.`
+      }${second ? `, then ${second.label.toLowerCase()} (${second.score}/100)` : ""}.`
     : "";
   const s3 =
     (strongest && strongest.id !== weakest?.id
-      ? ` On the plus side, your ${strongest.label.toLowerCase()} (${strongest.score}/100) is a genuine strength — the routine below protects it rather than fixing what isn't broken.`
+      ? ` Your ${strongest.label.toLowerCase()} (${strongest.score}/100) is a real strength — the routine protects it.`
       : "") +
     (skin.skinAge !== null
-      ? ` Your skin reads as about ${skin.skinAge} years old${skin.skinAgeIsEstimate ? " (estimated from your wrinkle and firmness signals)" : ""}.`
+      ? ` Skin age: about ${skin.skinAge}${skin.skinAgeIsEstimate ? " (estimate)" : ""}.`
       : "") +
     (tone
-      ? ` Your tone measured ${tone.depthLabel.toLowerCase()} with a ${tone.undertone} undertone, which is why your foundation matches lean ${tone.undertone}.`
+      ? ` Tone: ${tone.depthLabel.toLowerCase()}, ${tone.undertone} undertone.`
       : "");
 
   const headline = weakest
@@ -125,18 +125,14 @@ export function buildAdvisorReport(args: {
       return {
         productId: p.id,
         productName: p.name,
-        reason: `${pick.reason} It earns its place because a foundation matched to your measured tone (${tone?.skinColor ?? "your scan"}) replaces guesswork with your actual colour.`,
+        reason: pick.reason,
       };
     }
     if (concern) {
       return {
         productId: p.id,
         productName: p.name,
-        reason: `Because your ${concern.label.toLowerCase()} scored ${concern.score}/100 — ${
-          concern.score < 65
-            ? "well below the healthy 75+ range"
-            : "the lowest of your stronger concerns"
-        } — this is in your routine. ${p.whyItMatches}`,
+        reason: `Your ${concern.label.toLowerCase()} scored ${concern.score}/100. ${p.whyItMatches}`,
       };
     }
     // Essentials: tie them to the user's weakest relevant signal.
@@ -146,7 +142,7 @@ export function buildAdvisorReport(args: {
         productId: p.id,
         productName: p.name,
         reason: rel
-          ? `Your ${rel.label.toLowerCase()} score is ${rel.score}/100, so your cleanser has to work with it, not against it. ${p.whyItMatches}`
+          ? `Chosen for your ${rel.label.toLowerCase()} score (${rel.score}/100). ${p.whyItMatches}`
           : p.whyItMatches,
       };
     }
@@ -159,7 +155,7 @@ export function buildAdvisorReport(args: {
         productId: p.id,
         productName: p.name,
         reason: rel
-          ? `UV is the main driver of your ${rel.label.toLowerCase()} score (${rel.score}/100). Without daily SPF, the rest of this routine is fighting the sun with one hand tied. ${p.whyItMatches}`
+          ? `UV drives your ${rel.label.toLowerCase()} score (${rel.score}/100). ${p.whyItMatches}`
           : p.whyItMatches,
       };
     }
@@ -171,14 +167,14 @@ export function buildAdvisorReport(args: {
   const budgetNotes: string[] = [];
   if (Number.isFinite(budget)) {
     budgetNotes.push(
-      `Your in-budget routine totals ${money(total)} of your ${money(budget)} budget` +
+      `Routine: ${money(total)} of your ${money(budget)} budget` +
         (excluded.length === 0
-          ? " — everything your skin asked for fits, nothing was held back."
+          ? " — everything fits."
           : `, leaving ${money(budget - total)} of headroom.`)
     );
   } else {
     budgetNotes.push(
-      "No budget cap is set, so nothing was held back — the full matched routine is in."
+      "No budget cap — the full routine is in."
     );
   }
   excluded.forEach((pick, i) => {
@@ -223,7 +219,7 @@ export function buildAdvisorReport(args: {
   let shadeNote: string | null = null;
   if (tone && matches.length > 0) {
     const best = matches[0];
-    shadeNote = `Your skin colour measured ${tone.skinColor} — ${tone.depthLabel.toLowerCase()} depth, ${tone.undertone} undertone (ITA° ${tone.ita}). Shade ${best.shade.code} ${best.shade.name} is your closest match; try it on your own photo in the shade section before you buy, so the purchase is proven, not guessed.`;
+    shadeNote = `Skin colour ${tone.skinColor} — ${tone.depthLabel.toLowerCase()}, ${tone.undertone} undertone. Closest match: ${best.shade.code} ${best.shade.name}. Try it on below before you buy.`;
   } else if (tone) {
     shadeNote = `Your skin colour measured ${tone.skinColor} — ${tone.depthLabel.toLowerCase()} depth with a ${tone.undertone} undertone.`;
   }
