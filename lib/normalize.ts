@@ -78,67 +78,67 @@ export const CONCERN_META: Record<string, ConcernMeta> = {
   moisture: {
     label: "Moisture",
     explanation:
-      "How hydrated your skin barrier is. Low moisture means water escapes easily, leaving skin tight, flaky and more reactive.",
+      "How hydrated your skin barrier is. Low moisture leaves skin tight and flaky.",
     advice: "Layer humectants (hyaluronic acid, glycerin) and seal them in with ceramides.",
   },
   wrinkle: {
     label: "Wrinkles",
     explanation:
-      "Fine lines and deeper creases, mostly on the forehead, around the eyes and mouth. They deepen as collagen and elasticity decline.",
+      "Fine lines and creases — forehead, eyes, mouth. They deepen as collagen declines.",
     advice: "Retinoids at night, peptides, and daily SPF to stop lines deepening.",
   },
   acne: {
     label: "Acne & Blemishes",
     explanation:
-      "Active breakouts, clogged pores and inflammation. Often driven by excess oil, dead-skin buildup and bacteria.",
+      "Active breakouts and clogged pores, driven by oil and dead-skin buildup.",
     advice: "Salicylic acid or azelaic acid treatments, plus a non-comedogenic moisturizer.",
   },
   pore: {
     label: "Pores",
     explanation:
-      "How visible your pores look, especially on the nose, cheeks and forehead. They appear larger when stretched by oil and debris.",
+      "How visible your pores look — larger when stretched by oil and debris.",
     advice: "Niacinamide and gentle BHA exfoliation help pores look tighter over time.",
   },
   oiliness: {
     label: "Oiliness",
     explanation:
-      "How much sebum your skin produces. Excess oil in the T-zone leads to shine, congestion and makeup sliding off by midday.",
+      "How much sebum your skin produces. Excess oil means shine and congestion.",
     advice: "Lightweight gel textures and niacinamide to balance — never harsh stripping cleansers.",
   },
   redness: {
     label: "Redness",
     explanation:
-      "Visible flushing, irritation and broken-capillary redness. A sign the skin barrier is stressed or sensitive.",
+      "Flushing and irritation — a sign the barrier is stressed.",
     advice: "Azelaic acid, centella and ceramide creams calm and rebuild the barrier.",
   },
   dark_circle: {
     label: "Dark Circles",
     explanation:
-      "Shadowing and pigmentation under the eyes, from thin skin, fatigue, genetics or rubbing the eye area.",
+      "Shadowing under the eyes — thin skin, fatigue, genetics.",
     advice: "Caffeine and vitamin K eye products, gentle handling, and consistent sleep.",
   },
   eye_bag: {
     label: "Eye Bags",
     explanation:
-      "Puffiness and swelling under the eyes, usually from fluid retention, salt, allergies or lack of sleep.",
+      "Puffiness under the eyes — fluid, salt, allergies, lost sleep.",
     advice: "Caffeine-based eye concentrates and a cool compress in the morning.",
   },
   firmness: {
     label: "Firmness",
     explanation:
-      "How springy and elastic your skin feels. Firmness drops as collagen and elastin break down with age and sun exposure.",
+      "How springy and elastic your skin feels. Drops as collagen breaks down.",
     advice: "Peptides, retinoids and daily sun protection to support collagen.",
   },
   radiance: {
     label: "Radiance",
     explanation:
-      "How bright and even-toned your skin looks. Dullness usually comes from dead-cell buildup and dehydration.",
+      "How bright and even-toned your skin looks. Dullness comes from dead-cell buildup.",
     advice: "Vitamin C in the morning and gentle PHA/AHA exfoliation a few times a week.",
   },
   texture: {
     label: "Texture",
     explanation:
-      "Overall smoothness — roughness, bumps and uneven patches that make skin feel less refined and makeup sit unevenly.",
+      "Overall smoothness — roughness and bumps that makeup sits unevenly on.",
     advice: "Gentle chemical exfoliation and consistent hydration smooth texture fastest.",
   },
   age_spot: {
