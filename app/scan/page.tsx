@@ -70,6 +70,11 @@ export default function ScanPage() {
   const [budget, setBudget] = useState<number>(200);
   const [foundationPick, setFoundationPick] = useState<RoutinePick | null>(null);
   const [manualMode, setManualMode] = useState(false);
+  const [faceStable, setFaceStable] = useState<boolean | null>(null);
+  const stabilityRef = useRef<{ prev: Float32Array | null; calm: number }>({
+    prev: null,
+    calm: 0,
+  });
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -108,6 +113,50 @@ export default function ScanPage() {
       stopCamera();
     };
   }, [cleanupTimers, clearToneTimer, stopCamera]);
+
+  // Live face-stability hint for the camera view: sample a tiny center
+  // crop of the video a few times a second and measure frame-to-frame
+  // change. A still, well-framed face barely changes between samples;
+  // movement spikes the difference. Purely guidance — capture is never
+  // blocked, it just tells the user when the shot is steady enough for
+  // the most accurate scan.
+  useEffect(() => {
+    if (!cameraOn) {
+      setFaceStable(null);
+      stabilityRef.current = { prev: null, calm: 0 };
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const id = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.videoWidth === 0) return;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return;
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const s = Math.min(vw, vh);
+      ctx.drawImage(video, (vw - s) / 2, (vh - s) / 2, s, s, 0, 0, 32, 32);
+      const data = ctx.getImageData(0, 0, 32, 32).data;
+      const lum = new Float32Array(32 * 32);
+      for (let i = 0; i < 32 * 32; i++) {
+        lum[i] =
+          data[i * 4] * 0.34 + data[i * 4 + 1] * 0.5 + data[i * 4 + 2] * 0.16;
+      }
+      const prev = stabilityRef.current.prev;
+      if (prev) {
+        let diff = 0;
+        for (let i = 0; i < lum.length; i++) diff += Math.abs(lum[i] - prev[i]);
+        diff /= lum.length;
+        stabilityRef.current.calm =
+          diff < 6 ? stabilityRef.current.calm + 1 : 0;
+        setFaceStable(stabilityRef.current.calm >= 2);
+      }
+      stabilityRef.current.prev = lum;
+    }, 300);
+    return () => clearInterval(id);
+  }, [cameraOn]);
 
   const acceptImage = useCallback(async (file: Blob) => {
     const compressed = await compressImage(file);
@@ -523,13 +572,56 @@ export default function ScanPage() {
         {/* Capture panel */}
         <section className="rounded-[2rem] border border-ink/10 bg-white p-5 sm:p-6">
           {cameraOn ? (
-            <div className="relative overflow-hidden rounded-3xl bg-forest">
+            <div className="relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden rounded-3xl bg-forest">
               <video
                 ref={videoRef}
                 playsInline
                 muted
-                className="aspect-[4/5] w-full -scale-x-100 object-cover sm:aspect-[4/3]"
+                className="aspect-square h-full w-full -scale-x-100 object-cover"
               />
+              {/* Face guide: shadow mask with an oval cutout, so the user
+                  frames their whole face inside it for the best scan. */}
+              <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                <svg
+                  className="h-full w-full"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <mask id="glowcart-face-hole">
+                      <rect width="100" height="100" fill="white" />
+                      <ellipse cx="50" cy="46" rx="26" ry="36" fill="black" />
+                    </mask>
+                  </defs>
+                  <rect
+                    width="100"
+                    height="100"
+                    fill="rgba(18,28,23,0.52)"
+                    mask="url(#glowcart-face-hole)"
+                  />
+                </svg>
+                <div className="absolute left-1/2 top-[46%] h-[72%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-2 border-dashed border-white/85" />
+              </div>
+              {/* Framing + stability guidance */}
+              <div className="absolute inset-x-0 top-3 flex flex-col items-center gap-1.5 px-4 text-center">
+                <span
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold shadow-sm ${
+                    faceStable
+                      ? "bg-pine text-cream"
+                      : "bg-white/90 text-forest"
+                  }`}
+                  role="status"
+                >
+                  {faceStable === null
+                    ? "Line your face up in the oval"
+                    : faceStable
+                      ? "✓ Stable — that's a great shot, capture now"
+                      : "Hold still for a sharper scan…"}
+                </span>
+                <span className="text-[11px] font-medium text-white/85">
+                  Fit your whole face inside the oval and fill most of it
+                </span>
+              </div>
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-3 bg-gradient-to-t from-forest/80 to-transparent p-4 pt-10">
                 <button
                   type="button"
@@ -629,6 +721,22 @@ export default function ScanPage() {
               >
                 Pick my concerns →
               </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="rounded-full bg-forest px-4 py-2 text-xs font-bold text-cream transition-colors hover:bg-pine"
+                >
+                  ↻ Retake with camera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-full border border-forest/30 px-4 py-2 text-xs font-bold text-forest transition-colors hover:border-forest/60"
+                >
+                  Upload a photo instead
+                </button>
+              </div>
             </div>
           )}
 
