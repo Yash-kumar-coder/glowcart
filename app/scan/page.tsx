@@ -237,18 +237,25 @@ export default function ScanPage() {
   const captureFromCamera = async () => {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) return;
+    // Capture exactly the square the user sees on screen — NOT the full
+    // camera frame. The preview is a center-cropped square, so sending
+    // the full frame would shrink the face the user carefully framed in
+    // the oval and the AI would reject it as "face too small".
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const s = Math.min(vw, vh);
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = s;
+    canvas.height = s;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     // Mirror only the front (selfie) camera so it looks natural; the
     // back camera is captured as-is.
     if (facing === "user") {
-      ctx.translate(canvas.width, 0);
+      ctx.translate(s, 0);
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, (vw - s) / 2, (vh - s) / 2, s, s, 0, 0, s, s);
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.92)
     );
@@ -482,11 +489,10 @@ export default function ScanPage() {
 
         {result.source === "demo" && (
           <p className="mt-4 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink/75">
-            You&apos;re seeing a <strong>demo result</strong>: this server has
-            no YouCam API key configured, so GlowCart used a realistic sample
-            analysis to show the full experience. Add{" "}
+            <strong>Demo result</strong> — no API key on this server, so
+            this is sample data, not a measurement of your photo. Add{" "}
             <code className="rounded bg-white/70 px-1 font-mono text-[13px]">YOUCAM_API_KEY</code>{" "}
-            to run your photo through the real YouCam AI.
+            to run the real YouCam AI.
           </p>
         )}
 
@@ -564,10 +570,8 @@ export default function ScanPage() {
             Your matched routine
           </h2>
           <p className="mt-1 max-w-2xl text-ink/65">
-            Built from your three weakest concerns, plus the cleanser,
-            moisturizer and SPF every routine needs — each one chosen to fit
-            your skin, and trimmed to your budget. Add your tried-on
-            foundation above and it joins this routine and cart.
+            Your three weakest concerns, plus cleanser, moisturizer and
+            SPF — trimmed to your budget.
           </p>
           <div className="mt-6">
             <RoutineBuilder
@@ -598,9 +602,8 @@ export default function ScanPage() {
           Let&apos;s read your skin.
         </h1>
         <p className="mt-3 text-lg text-ink/65">
-          One front-facing selfie is all YouCam&apos;s AI needs to score 12
-          skin concerns, read your exact skin tone, match your foundation
-          shade — and let you try it on before you buy.
+          One selfie. Twelve concerns scored, your shade matched — and
+          tried on before you buy.
         </p>
       </div>
 
@@ -745,8 +748,7 @@ export default function ScanPage() {
                 Drop your selfie here, or click to choose
               </span>
               <span className="mt-1 text-sm text-ink/55">
-                JPG or PNG, up to 10 MB. Your photo is sent only to the
-                YouCam analysis service and isn&apos;t stored by GlowCart.
+                JPG or PNG, up to 10 MB. Sent only to YouCam — never stored.
               </span>
             </button>
           )}
@@ -774,10 +776,9 @@ export default function ScanPage() {
           )}
           {phase === "error" && (
             <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink/75">
-              <strong>We won&apos;t show you made-up results.</strong> If
-              your photo won&apos;t scan, pick your top concerns yourself
-              and we&apos;ll build your routine from those instead —
-              clearly labeled, no invented scores.{" "}
+              <strong>No made-up results.</strong> If your photo won’t
+              scan, pick your top concerns — we’ll build your routine
+              from those. Labeled, no invented scores.{" "}
               <button
                 type="button"
                 onClick={() => setManualMode(true)}
@@ -884,19 +885,15 @@ export default function ScanPage() {
               What happens next
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-cream/80">
-              You&apos;ll get an overall skin score, an estimated skin age,
-              and a weakest-first breakdown of 12 concerns — then
-              GlowAdvisor&apos;s take on your numbers, your foundation shade
-              match with a virtual try-on, and a routine matched to your top
-              three concerns, trimmed to your budget.
+              Score, skin age, 12 concerns — then your shade match,
+              try-on, and a routine for your three weakest concerns.
             </p>
           </div>
           <div className="mt-6 rounded-2xl bg-cream/8 p-4">
             <p className="text-xs leading-relaxed text-cream/70">
-              <strong className="text-cream">Privacy:</strong> your photo is
-              processed by Perfect Corp&apos;s YouCam API over an encrypted
-              connection. GlowCart does not store your photo or your results
-              on any server.
+              <strong className="text-cream">Privacy:</strong> processed by
+              YouCam’s API over an encrypted connection. GlowCart stores
+              nothing.
             </p>
           </div>
         </aside>
