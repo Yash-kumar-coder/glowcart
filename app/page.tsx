@@ -63,37 +63,37 @@ const STEPS = [
   {
     n: "01",
     title: "Scan",
-    body: "Take or upload one front-facing selfie. YouCam's AI reads your skin in seconds — no questionnaires, no guesswork about your \"skin type\".",
+    body: "Take or upload one front-facing selfie.",
   },
   {
     n: "02",
     title: "Scores",
-    body: "Get an overall skin score, an estimated skin age, and a score for each of 12 concerns — moisture, wrinkles, pores, acne and more — weakest first, in plain language.",
+    body: "An overall score, a skin age, and 12 concern scores \u2014 weakest first.",
   },
   {
     n: "03",
     title: "Match & try it on",
-    body: "A second AI reads your exact skin tone and matches your foundation shade — then YouCam's Makeup VTO applies it to your own photo, so you see the shade on your face before you buy it.",
+    body: "Your exact tone read, your shade matched \u2014 and tried on your own photo.",
   },
   {
     n: "04",
     title: "Shop your routine",
-    body: "GlowAdvisor explains your numbers, we build your AM and PM routine from your three weakest concerns plus your tried-on foundation, and keep it inside the budget you choose. Nothing more, nothing less.",
+    body: "A routine built from your three weakest concerns, inside your budget.",
   },
 ];
 
 const PROBLEMS = [
   {
     title: "Bought blind",
-    body: "Most skincare is picked from a friend's post, a pretty jar or a sale — not from any measurement of your own skin. So the shelf fills with products your skin never asked for.",
+    body: "Most skincare is picked from ads and posts \u2014 never from a measurement of your skin.",
   },
   {
     title: "Wrong actives, real damage",
-    body: "Layering strong acids and retinoids your skin doesn't need (or can't tolerate) quietly wrecks the moisture barrier — the very thing that keeps skin calm and clear.",
+    body: "Strong actives your skin doesn\u2019t need quietly wreck its moisture barrier.",
   },
   {
     title: "Money spent twice",
-    body: "When a blind-bought routine fails, the fix is usually another blind purchase. GlowCart flips it: measure first, then buy only what the measurement points to.",
+    body: "When a blind routine fails, the fix is another blind purchase. Measure first.",
   },
 ];
 
@@ -129,9 +129,8 @@ export default function Home() {
               <em className="italic text-clay">actually</em> needs.
             </h1>
             <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink/70">
-              One selfie is enough. GlowCart scores 12 skin concerns with
-              Perfect Corp&apos;s YouCam AI, then builds a shoppable routine
-              around your weakest ones — inside a budget you set.
+              One selfie. Twelve skin concerns scored by YouCam AI — then a
+              routine built around your weakest ones, inside your budget.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -236,9 +235,8 @@ export default function Home() {
             Twelve concerns, one honest picture of your skin.
           </h2>
           <p className="mt-3 max-w-2xl text-ink/65">
-            Every scan scores each concern from 0–100 using the YouCam AI Skin
-            Analysis engine. Your routine is built from whichever three score
-            lowest — because that&apos;s where your money does the most good.
+            Each concern scored 0–100. Your routine is built from the three
+            that score lowest.
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
             {Object.values(CONCERN_META).map((c) => (
@@ -265,8 +263,7 @@ export default function Home() {
               Your skin already knows what it needs. Ask it.
             </h2>
             <p className="relative mx-auto mt-3 max-w-md text-ink/65">
-              A scan takes less than a minute, and your next routine will be
-              the first one chosen by your skin — not by an ad.
+              One minute. A routine chosen by your skin — not by an ad.
             </p>
             <Link
               href="/scan"
