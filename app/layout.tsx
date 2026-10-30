@@ -27,10 +27,7 @@ function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5" aria-label="GlowCart home">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo-g.png" alt="" className="h-10 w-10 object-contain" />
-      <span className="font-display text-[22px] font-semibold tracking-tight text-forest">
-        GlowCart
-      </span>
+      <img src="/logo-mark.png" alt="" className="h-12 w-auto" />
     </Link>
   );
 }
