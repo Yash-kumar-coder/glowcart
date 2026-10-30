@@ -23,23 +23,23 @@ const DEMO_TASK_MS: Record<DemoFeature, number> = {
   tryon: 4500,
 };
 
-interface DemoTaskRecord {
-  startedAt: number;
-  feature: DemoFeature;
-}
-
-const tasks = new Map<string, DemoTaskRecord>();
-
+/**
+ * Demo tasks are STATELESS by design: the task id itself carries the
+ * feature and the creation time (`demo_<feature>_<base36 timestamp>_<rand>`),
+ * so any server instance can resolve a task without shared memory. This
+ * matters on serverless hosting (e.g. Vercel), where the POST that creates
+ * a task and the GET that polls it may run in different containers — an
+ * in-memory task map silently loses tasks there and polling falls through
+ * to the live API path.
+ */
 export function createDemoTask(feature: DemoFeature = "skin"): string {
-  const id = `demo_${feature}_${Date.now().toString(36)}_${Math.random()
+  return `demo_${feature}_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 8)}`;
-  tasks.set(id, { startedAt: Date.now(), feature });
-  return id;
 }
 
 export function isDemoTask(taskId: string): boolean {
-  return taskId.startsWith("demo_") && tasks.has(taskId);
+  return taskId.startsWith("demo_");
 }
 
 export type DemoTaskState =
@@ -48,21 +48,19 @@ export type DemoTaskState =
   | { state: "error"; message: string; code: string };
 
 export function getDemoTaskState(taskId: string): DemoTaskState {
-  const task = tasks.get(taskId);
-  if (task === undefined) {
-    return {
-      state: "error",
-      message: "That demo task has expired. Please start again.",
-      code: "demo_task_expired",
-    };
-  }
-  if (Date.now() - task.startedAt < DEMO_TASK_MS[task.feature]) {
+  const parts = taskId.split("_");
+  const feature = (parts[1] ?? "skin") as DemoFeature;
+  const startedAt = Number.parseInt(parts[2] ?? "", 36);
+  if (
+    Number.isFinite(startedAt) &&
+    Date.now() - startedAt < (DEMO_TASK_MS[feature] ?? DEMO_TASK_MS.skin)
+  ) {
     return { state: "running" };
   }
-  if (task.feature === "tone") {
+  if (feature === "tone") {
     return { state: "success", payload: DEMO_TONE_RESPONSE };
   }
-  if (task.feature === "tryon") {
+  if (feature === "tryon") {
     // No image URL in demo mode — the client renders its labeled
     // approximation over the user's own uploaded photo.
     return { state: "success", payload: DEMO_TRYON_RESPONSE };
