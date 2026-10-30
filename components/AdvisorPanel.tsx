@@ -37,7 +37,7 @@ export default function AdvisorPanel({
           ✦ GlowAdvisor
         </p>
         <p className="text-xs font-semibold text-cream/55">
-          Reasoning over your actual numbers — no generic tips
+          From your numbers. No generic tips.
         </p>
       </div>
       <h2 className="mt-2 font-display text-3xl font-semibold">
@@ -86,8 +86,7 @@ export default function AdvisorPanel({
               ))}
             </ul>
             <p className="mt-3 text-xs text-cream/50">
-              These notes track the budget filter in your routine below —
-              change the budget and the trade-offs update.
+              Updates when you change the budget.
             </p>
           </div>
 
