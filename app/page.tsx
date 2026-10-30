@@ -112,6 +112,12 @@ export default function Home() {
         />
         <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-2 lg:pt-20">
           <div className="animate-fade-up">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.png"
+              alt="GlowCart — serum dropper and face, drawn in one line"
+              className="mb-6 h-32 w-auto"
+            />
             <span className="inline-flex items-center gap-2 rounded-full border border-forest/15 bg-white/70 px-3.5 py-1.5 text-xs font-bold text-forest">
               <span className="size-1.5 rounded-full bg-clay" />
               Powered by YouCam AI Skin Analysis
