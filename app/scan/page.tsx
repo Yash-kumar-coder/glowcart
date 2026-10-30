@@ -70,6 +70,7 @@ export default function ScanPage() {
   const [budget, setBudget] = useState<number>(200);
   const [foundationPick, setFoundationPick] = useState<RoutinePick | null>(null);
   const [manualMode, setManualMode] = useState(false);
+  const [facing, setFacing] = useState<"user" | "environment">("user");
   const [faceStable, setFaceStable] = useState<boolean | null>(null);
 
   const stabilityRef = useRef<{ prev: Float32Array | null; calm: number }>({
@@ -179,26 +180,57 @@ export default function ScanPage() {
     await acceptImage(file);
   };
 
+  const attachStream = useCallback((stream: MediaStream) => {
+    streamRef.current = stream;
+    requestAnimationFrame(() => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        void videoRef.current.play().catch(() => undefined);
+      }
+    });
+  }, []);
+
   const startCamera = async () => {
     setCameraError("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1600 } },
+        video: {
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 1600 },
+        },
         audio: false,
       });
-      streamRef.current = stream;
       setCameraOn(true);
-      // Attach after render.
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play().catch(() => undefined);
-        }
-      });
+      attachStream(stream);
     } catch {
       setCameraError(
         "Camera access was blocked. You can still upload a photo instead."
       );
+    }
+  };
+
+  /** Flip between the front and back cameras. The current stream keeps
+   *  running until the new one is confirmed, so a device with a single
+   *  camera just shows a note instead of losing the view. Front camera
+   *  is mirrored (selfie view); the back camera is not. */
+  const flipCamera = async () => {
+    const next = facing === "user" ? "environment" : "user";
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { exact: next },
+          width: { ideal: 1280 },
+          height: { ideal: 1600 },
+        },
+        audio: false,
+      });
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      setFacing(next);
+      setCameraError("");
+      attachStream(stream);
+    } catch {
+      setCameraError("This device has no second camera to flip to.");
     }
   };
 
@@ -210,9 +242,12 @@ export default function ScanPage() {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    // Mirror the selfie so it looks natural.
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    // Mirror only the front (selfie) camera so it looks natural; the
+    // back camera is captured as-is.
+    if (facing === "user") {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0);
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.92)
@@ -578,8 +613,33 @@ export default function ScanPage() {
                 ref={videoRef}
                 playsInline
                 muted
-                className="aspect-square h-full w-full -scale-x-100 object-cover"
+                className={`aspect-square h-full w-full object-cover ${
+                  facing === "user" ? "-scale-x-100" : ""
+                }`}
               />
+              {/* Flip camera (front ↔ back) */}
+              <button
+                type="button"
+                onClick={flipCamera}
+                aria-label="Flip camera"
+                title="Flip camera"
+                className="absolute right-3 top-3 z-10 grid size-11 place-items-center rounded-full bg-[#14231c]/70 text-cream backdrop-blur transition-colors hover:bg-[#14231c]/90"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6.1" />
+                  <path d="M18.6 2.8v4h-4" />
+                  <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
               {/* Face guide: shadow mask with an oval cutout, so the user
                   frames their whole face inside it for the best scan. */}
               <div className="pointer-events-none absolute inset-0" aria-hidden="true">
