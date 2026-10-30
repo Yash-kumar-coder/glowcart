@@ -402,10 +402,8 @@ export default function ShadeMatchSection({
                       undertone · satin finish
                     </p>
                     <p className="mt-3 flex-1 text-sm leading-relaxed text-cream/85">
-                      This is the exact shade GlowCart matched to your
-                      measured skin colour {tone.skinColor}. Drag the slider
-                      to compare — if it looks like <em>your</em> skin, only
-                      better, it&apos;s the right one.
+                      Matched to your measured skin colour {tone.skinColor}.
+                      Drag the slider to compare.
                     </p>
                     <button
                       type="button"
@@ -422,10 +420,8 @@ export default function ShadeMatchSection({
               )}
               {tryOnPhase === "idle" && (
                 <p className="rounded-3xl bg-parchment px-5 py-4 text-sm text-ink/65">
-                  Pick <strong>“Try this shade on”</strong> on any match above
-                  — YouCam&apos;s Makeup VTO will apply that exact foundation
-                  colour to your photo so you can judge it on your own face
-                  before buying.
+                  Pick <strong>“Try this shade on”</strong> above —
+                  YouCam applies that exact shade to your photo.
                 </p>
               )}
             </div>
