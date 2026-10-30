@@ -72,8 +72,13 @@ const STEPS = [
   },
   {
     n: "03",
+    title: "Match & try it on",
+    body: "A second AI reads your exact skin tone and matches your foundation shade — then YouCam's Makeup VTO applies it to your own photo, so you see the shade on your face before you buy it.",
+  },
+  {
+    n: "04",
     title: "Shop your routine",
-    body: "We build your AM and PM routine from your three weakest concerns, add the essentials, and keep it inside the budget you choose. Nothing more, nothing less.",
+    body: "GlowAdvisor explains your numbers, we build your AM and PM routine from your three weakest concerns plus your tried-on foundation, and keep it inside the budget you choose. Nothing more, nothing less.",
   },
 ];
 
