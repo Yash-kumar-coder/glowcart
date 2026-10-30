@@ -20,21 +20,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "GlowCart — Scan your skin. Shop only what it needs.",
   description:
-    "GlowCart uses YouCam AI Skin Analysis to score your skin from one selfie, then builds a personalized, shoppable skincare routine matched to your weakest concerns and your budget.",
+    "GlowCart uses three YouCam APIs — AI Skin Analysis, Skin Tone Analysis and Makeup VTO — to score your skin from one selfie, match your exact foundation shade, let you try it on, and build a shoppable routine matched to your concerns and budget.",
 };
 
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5" aria-label="GlowCart home">
-      <span className="grid size-9 place-items-center rounded-2xl bg-forest text-cream">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M12 3c.7 4.8 2.4 6.5 7.2 7.2-4.8.7-6.5 2.4-7.2 7.2-.7-4.8-2.4-6.5-7.2-7.2C9.6 9.5 11.3 7.8 12 3Z"
-            fill="currentColor"
-          />
-          <circle cx="18.5" cy="17.5" r="1.6" fill="#EFC9B8" />
-        </svg>
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-g.png" alt="" className="h-10 w-10 object-contain" />
       <span className="font-display text-[22px] font-semibold tracking-tight text-forest">
         GlowCart
       </span>
