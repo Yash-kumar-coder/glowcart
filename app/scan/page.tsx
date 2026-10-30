@@ -7,6 +7,7 @@ import ConcernBars from "@/components/ConcernBars";
 import RoutineBuilder from "@/components/RoutineBuilder";
 import ShadeMatchSection from "@/components/ShadeMatch";
 import AdvisorPanel from "@/components/AdvisorPanel";
+import ManualRoutine from "@/components/ManualRoutine";
 import { buildRoutine, type RoutinePick } from "@/lib/recommend";
 import { matchShades, shadeToProduct, type ShadeMatch } from "@/lib/shades";
 
@@ -68,6 +69,7 @@ export default function ScanPage() {
   const [toneError, setToneError] = useState("");
   const [budget, setBudget] = useState<number>(200);
   const [foundationPick, setFoundationPick] = useState<RoutinePick | null>(null);
+  const [manualMode, setManualMode] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -330,6 +332,7 @@ export default function ScanPage() {
     setToneStatus("idle");
     setToneError("");
     setFoundationPick(null);
+    setManualMode(false);
     setImageBlob(null);
     setError("");
     setPreviewUrl((prev) => {
@@ -493,6 +496,15 @@ export default function ScanPage() {
     );
   }
 
+  /* --------------------- Manual (no-scan) fallback --------------------- */
+  if (manualMode) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+        <ManualRoutine onBack={() => setManualMode(false)} />
+      </div>
+    );
+  }
+
   /* --------------------------- Capture / states --------------------------- */
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -604,6 +616,21 @@ export default function ScanPage() {
               {error}
             </p>
           )}
+          {phase === "error" && (
+            <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink/75">
+              <strong>We won&apos;t show you made-up results.</strong> If
+              your photo won&apos;t scan, pick your top concerns yourself
+              and we&apos;ll build your routine from those instead —
+              clearly labeled, no invented scores.{" "}
+              <button
+                type="button"
+                onClick={() => setManualMode(true)}
+                className="font-semibold text-forest underline underline-offset-2"
+              >
+                Pick my concerns →
+              </button>
+            </div>
+          )}
 
           <div className="mt-5 flex flex-wrap gap-3">
             {!cameraOn && !previewUrl && (
@@ -623,6 +650,13 @@ export default function ScanPage() {
                   className="rounded-full bg-clay px-7 py-3 text-sm font-bold text-white transition-colors hover:bg-clay-dark"
                 >
                   Analyze my skin →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManualMode(true)}
+                  className="rounded-full px-3 py-3 text-sm font-semibold text-ink/55 underline-offset-2 transition-colors hover:text-forest hover:underline"
+                >
+                  Photo won&apos;t scan? Pick your concerns instead
                 </button>
                 <button
                   type="button"
