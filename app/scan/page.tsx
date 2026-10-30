@@ -1,18 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { SkinAnalysisResult } from "@/lib/normalize";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { SkinAnalysisResult, SkinToneResult } from "@/lib/normalize";
 import ScoreGauge from "@/components/ScoreGauge";
 import ConcernBars from "@/components/ConcernBars";
 import RoutineBuilder from "@/components/RoutineBuilder";
+import ShadeMatchSection from "@/components/ShadeMatch";
+import AdvisorPanel from "@/components/AdvisorPanel";
+import { buildRoutine, type RoutinePick } from "@/lib/recommend";
+import { matchShades, shadeToProduct, type ShadeMatch } from "@/lib/shades";
 
 type Phase = "capture" | "analyzing" | "done" | "error";
+type ToneStatus = "idle" | "running" | "error" | "done";
 
 const PROGRESS_STEPS = [
   "Uploading your photo securely…",
   "Finding your face and mapping landmarks…",
   "Scoring moisture, pores, wrinkles and 9 more concerns…",
-  "Building your personalized routine…",
+  "Reading your skin tone and matching your foundation shade…",
 ];
 
 const PHOTO_TIPS = [
@@ -58,6 +63,11 @@ export default function ScanPage() {
   const [progressStep, setProgressStep] = useState(0);
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<SkinAnalysisResult | null>(null);
+  const [tone, setTone] = useState<SkinToneResult | null>(null);
+  const [toneStatus, setToneStatus] = useState<ToneStatus>("idle");
+  const [toneError, setToneError] = useState("");
+  const [budget, setBudget] = useState<number>(200);
+  const [foundationPick, setFoundationPick] = useState<RoutinePick | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -66,6 +76,7 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopCamera = useCallback(() => {
@@ -74,6 +85,8 @@ export default function ScanPage() {
     setCameraOn(false);
   }, []);
 
+  // Skin-scan timers only. The tone poll runs on its own timer and must
+  // NOT be cancelled when the skin scan finishes first (or vice versa).
   const cleanupTimers = useCallback(() => {
     if (pollTimer.current) clearTimeout(pollTimer.current);
     if (stepTimer.current) clearInterval(stepTimer.current);
@@ -81,12 +94,18 @@ export default function ScanPage() {
     stepTimer.current = null;
   }, []);
 
+  const clearToneTimer = useCallback(() => {
+    if (toneTimer.current) clearTimeout(toneTimer.current);
+    toneTimer.current = null;
+  }, []);
+
   useEffect(() => {
     return () => {
       cleanupTimers();
+      clearToneTimer();
       stopCamera();
     };
-  }, [cleanupTimers, stopCamera]);
+  }, [cleanupTimers, clearToneTimer, stopCamera]);
 
   const acceptImage = useCallback(async (file: Blob) => {
     const compressed = await compressImage(file);
@@ -199,14 +218,86 @@ export default function ScanPage() {
     }, 2500);
   }, [cleanupTimers]);
 
+  const pollTone = useCallback((taskId: string, attempts: number) => {
+    toneTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/tone/status?taskId=${encodeURIComponent(taskId)}`,
+          { cache: "no-store" }
+        );
+        const json = (await res.json()) as {
+          status?: string;
+          result?: SkinToneResult;
+          error?: string;
+        };
+        if (json.status === "success" && json.result) {
+          setTone(json.result);
+          setToneStatus("done");
+          return;
+        }
+        if (json.status === "error" || !res.ok) {
+          setToneError(json.error ?? "Tone analysis failed.");
+          setToneStatus("error");
+          return;
+        }
+        if (attempts > 48) {
+          setToneError("Tone analysis timed out.");
+          setToneStatus("error");
+          return;
+        }
+        pollTone(taskId, attempts + 1);
+      } catch {
+        if (attempts > 48) {
+          setToneError("Tone analysis connection lost.");
+          setToneStatus("error");
+          return;
+        }
+        pollTone(taskId, attempts + 1);
+      }
+    }, 2500);
+  }, []);
+
+  /** Run Skin Tone Analysis on the same selfie, in parallel with the skin scan. */
+  const startToneAnalysis = useCallback(
+    async (blob: Blob) => {
+      setToneStatus("running");
+      setToneError("");
+      try {
+        const form = new FormData();
+        form.append(
+          "image",
+          new File([blob], "selfie.jpg", { type: "image/jpeg" })
+        );
+        const res = await fetch("/api/tone", { method: "POST", body: form });
+        const json = (await res.json()) as { taskId?: string; error?: string };
+        if (!res.ok || !json.taskId) {
+          setToneError(json.error ?? "Could not start tone analysis.");
+          setToneStatus("error");
+          return;
+        }
+        pollTone(json.taskId, 0);
+      } catch {
+        setToneError("Could not reach the tone analysis service.");
+        setToneStatus("error");
+      }
+    },
+    [pollTone]
+  );
+
   const startAnalysis = async () => {
     if (!imageBlob) return;
     setPhase("analyzing");
     setProgressStep(0);
     setError("");
+    setTone(null);
+    setToneStatus("idle");
+    setFoundationPick(null);
     stepTimer.current = setInterval(() => {
       setProgressStep((s) => Math.min(s + 1, PROGRESS_STEPS.length - 1));
     }, 3000);
+    // Skin Tone Analysis runs on the same selfie, in parallel — its result
+    // powers the shade-match section of the report.
+    void startToneAnalysis(imageBlob);
     try {
       const form = new FormData();
       form.append(
@@ -231,9 +322,14 @@ export default function ScanPage() {
 
   const reset = () => {
     cleanupTimers();
+    clearToneTimer();
     stopCamera();
     setPhase("capture");
     setResult(null);
+    setTone(null);
+    setToneStatus("idle");
+    setToneError("");
+    setFoundationPick(null);
     setImageBlob(null);
     setError("");
     setPreviewUrl((prev) => {
@@ -241,6 +337,29 @@ export default function ScanPage() {
       return null;
     });
   };
+
+  const routinePicks = useMemo<RoutinePick[]>(() => {
+    if (!result) return [];
+    const base = buildRoutine(result);
+    // A tried-on foundation, once added, leads the routine (priority -1 in
+    // the budget walk) — it's an explicit, proven choice by the user.
+    return foundationPick ? [foundationPick, ...base] : base;
+  }, [result, foundationPick]);
+
+  const shadeMatches = useMemo(
+    () => (tone ? matchShades(tone) : []),
+    [tone]
+  );
+
+  const addFoundation = useCallback((match: ShadeMatch) => {
+    setFoundationPick({
+      product: shadeToProduct(match.shade),
+      forConcern: "shade-match",
+      forLabel: `Shade match · ${match.shade.code} ${match.shade.name}`,
+      reason: `${match.reason} You tried this exact shade on your own photo before adding it.`,
+      priority: -1,
+    });
+  }, []);
 
   /* ------------------------------ Results ------------------------------ */
   if (phase === "done" && result) {
@@ -327,6 +446,30 @@ export default function ScanPage() {
           </div>
         </section>
 
+        {/* GlowAdvisor */}
+        <AdvisorPanel
+          skin={result}
+          tone={tone}
+          picks={routinePicks}
+          budget={budget}
+          matches={shadeMatches}
+        />
+
+        {/* Shade match + virtual try-on */}
+        <ShadeMatchSection
+          tone={tone}
+          toneStatus={toneStatus}
+          toneError={toneError}
+          previewUrl={previewUrl}
+          imageBlob={imageBlob}
+          addedShadeId={
+            foundationPick
+              ? foundationPick.product.id.replace("foundation-", "")
+              : null
+          }
+          onAddFoundation={addFoundation}
+        />
+
         {/* Routine */}
         <section className="mt-10">
           <h2 className="font-display text-3xl font-semibold text-forest">
@@ -335,10 +478,15 @@ export default function ScanPage() {
           <p className="mt-1 max-w-2xl text-ink/65">
             Built from your three weakest concerns, plus the cleanser,
             moisturizer and SPF every routine needs — each one chosen to fit
-            your skin, and trimmed to your budget.
+            your skin, and trimmed to your budget. Add your tried-on
+            foundation above and it joins this routine and cart.
           </p>
           <div className="mt-6">
-            <RoutineBuilder result={result} />
+            <RoutineBuilder
+              picks={routinePicks}
+              budget={budget}
+              onBudgetChange={setBudget}
+            />
           </div>
         </section>
       </div>
@@ -354,7 +502,8 @@ export default function ScanPage() {
         </h1>
         <p className="mt-3 text-lg text-ink/65">
           One front-facing selfie is all YouCam&apos;s AI needs to score 12
-          skin concerns and build your routine.
+          skin concerns, read your exact skin tone, match your foundation
+          shade — and let you try it on before you buy.
         </p>
       </div>
 
@@ -530,8 +679,10 @@ export default function ScanPage() {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-cream/80">
               You&apos;ll get an overall skin score, an estimated skin age,
-              and a weakest-first breakdown of 12 concerns — then a routine
-              matched to your top three, trimmed to your budget.
+              and a weakest-first breakdown of 12 concerns — then
+              GlowAdvisor&apos;s take on your numbers, your foundation shade
+              match with a virtual try-on, and a routine matched to your top
+              three concerns, trimmed to your budget.
             </p>
           </div>
           <div className="mt-6 rounded-2xl bg-cream/8 p-4">
