@@ -21,6 +21,12 @@ const PROGRESS_STEPS = [
   "Reading your skin tone and matching your foundation shade…",
 ];
 
+const ANGLE_PROMPTS = [
+  "Face the camera straight on",
+  "Turn your face slightly to your left",
+  "Now turn slightly to your right",
+];
+
 const PHOTO_TIPS = [
   "Face the camera straight on, hair off your forehead",
   "Use bright, even light — face a window if you can",
@@ -71,6 +77,14 @@ export default function ScanPage() {
   const [foundationPick, setFoundationPick] = useState<RoutinePick | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [faceStable, setFaceStable] = useState<boolean | null>(null);
+  // Three-angle guided capture (front → left → right), after the
+  // reference design the owner chose. The FRONT photo is the one the AI
+  // analyzes; the side angles are the user's visual record, shown in the
+  // report and labeled as such — never scored or faked.
+  const [angleStep, setAngleStep] = useState(0);
+  const [sideUrls, setSideUrls] = useState<{ left?: string; right?: string }>(
+    {}
+  );
   const stabilityRef = useRef<{ prev: Float32Array | null; calm: number }>({
     prev: null,
     calm: 0,
@@ -178,8 +192,18 @@ export default function ScanPage() {
     await acceptImage(file);
   };
 
+  const clearSides = useCallback(() => {
+    setSideUrls((prev) => {
+      if (prev.left) URL.revokeObjectURL(prev.left);
+      if (prev.right) URL.revokeObjectURL(prev.right);
+      return {};
+    });
+  }, []);
+
   const startCamera = async () => {
     setCameraError("");
+    setAngleStep(0);
+    clearSides();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1600 } },
@@ -216,8 +240,27 @@ export default function ScanPage() {
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.92)
     );
+    if (!blob) return;
+    if (angleStep === 0) {
+      // Front angle: this is the photo the AI analyzes. Keep the camera
+      // open and guide the two side angles next.
+      await acceptImage(blob);
+      setAngleStep(1);
+      return;
+    }
+    // Side angles: the user's visual record, shown in the report.
+    const url = URL.createObjectURL(blob);
+    if (angleStep === 1) {
+      setSideUrls((prev) => ({ ...prev, left: url }));
+      setAngleStep(2);
+    } else {
+      setSideUrls((prev) => ({ ...prev, right: url }));
+      stopCamera();
+    }
+  };
+
+  const skipSideAngles = () => {
     stopCamera();
-    if (blob) await acceptImage(blob);
   };
 
   const pollStatus = useCallback((taskId: string, attempts: number) => {
@@ -382,6 +425,8 @@ export default function ScanPage() {
     setToneError("");
     setFoundationPick(null);
     setManualMode(false);
+    setAngleStep(0);
+    clearSides();
     setImageBlob(null);
     setError("");
     setPreviewUrl((prev) => {
@@ -498,6 +543,46 @@ export default function ScanPage() {
           </div>
         </section>
 
+        {/* Three angles (only when the user captured side angles) */}
+        {(sideUrls.left || sideUrls.right) && (
+          <section className="mt-6 rounded-[2rem] border border-ink/10 bg-white p-6">
+            <h2 className="font-display text-2xl font-semibold text-ink">
+              One scan, three angles
+            </h2>
+            <p className="mt-1 text-sm text-ink/60">
+              Your AI report is scored from your front scan — the side
+              angles are your visual record, kept exactly as captured.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              {[
+                { label: "Front", url: previewUrl },
+                { label: "Left", url: sideUrls.left ?? null },
+                { label: "Right", url: sideUrls.right ?? null },
+              ].map((a) => (
+                <figure key={a.label} className="text-center">
+                  <div className="overflow-hidden rounded-2xl bg-parchment">
+                    {a.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={a.url}
+                        alt={`Your ${a.label.toLowerCase()} angle`}
+                        className="aspect-square w-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid aspect-square w-full place-items-center text-xs font-semibold text-ink/40">
+                        Not captured
+                      </div>
+                    )}
+                  </div>
+                  <figcaption className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink/50">
+                    {a.label}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* GlowAdvisor */}
         <AdvisorPanel
           skin={result}
@@ -600,43 +685,106 @@ export default function ScanPage() {
                     mask="url(#glowcart-face-hole)"
                   />
                 </svg>
-                <div className="absolute left-1/2 top-[46%] h-[72%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-2 border-dashed border-white/85" />
+                <div className="absolute left-1/2 top-[46%] h-[72%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[3px] border-[#2fbf71] shadow-[0_0_36px_rgba(47,191,113,0.45)]" />
               </div>
               {/* Framing + stability guidance */}
               <div className="absolute inset-x-0 top-3 flex flex-col items-center gap-1.5 px-4 text-center">
                 <span
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold shadow-sm ${
-                    faceStable
-                      ? "bg-pine text-cream"
-                      : "bg-white/90 text-forest"
-                  }`}
+                  className="rounded-full bg-[#14231c]/85 px-4 py-2 text-xs font-bold text-cream shadow-sm backdrop-blur"
                   role="status"
                 >
-                  {faceStable === null
-                    ? "Line your face up in the oval"
-                    : faceStable
-                      ? "✓ Stable — that's a great shot, capture now"
-                      : "Hold still for a sharper scan…"}
+                  {faceStable === null ? (
+                    "Position your face in the oval"
+                  ) : faceStable ? (
+                    <>
+                      <span className="text-[#2fbf71]">✓</span> Perfect —
+                      capture now
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[#2fbf71]">✓</span> Hold still…
+                    </>
+                  )}
                 </span>
-                <span className="text-[11px] font-medium text-white/85">
-                  Fit your whole face inside the oval and fill most of it
+                <span className="text-[11px] font-semibold text-white/90">
+                  {ANGLE_PROMPTS[angleStep]} · fill most of the oval
                 </span>
               </div>
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-3 bg-gradient-to-t from-forest/80 to-transparent p-4 pt-10">
-                <button
-                  type="button"
-                  onClick={captureFromCamera}
-                  className="rounded-full bg-clay px-6 py-3 text-sm font-bold text-white hover:bg-clay-dark"
-                >
-                  Capture photo
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="rounded-full bg-white/90 px-5 py-3 text-sm font-semibold text-forest hover:bg-white"
-                >
-                  Cancel
-                </button>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest/85 to-transparent p-4 pt-10">
+                {/* Three-angle progress: front → left → right */}
+                <div className="mb-3 flex items-end justify-center gap-7">
+                  {["Front", "Left", "Right"].map((label, i) => {
+                    const done =
+                      i < angleStep || (i === 0 && !cameraOn);
+                    const current = i === angleStep;
+                    const color = current
+                      ? "text-[#2fbf71]"
+                      : done
+                        ? "text-[#2fbf71]/80"
+                        : "text-white/45";
+                    return (
+                      <span
+                        key={label}
+                        className={`flex flex-col items-center gap-1 ${color}`}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="size-7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          strokeLinecap="round"
+                          aria-hidden="true"
+                        >
+                          {i === 0 ? (
+                            <>
+                              <circle cx="12" cy="9" r="5.5" />
+                              <circle cx="10" cy="9" r="0.5" fill="currentColor" stroke="none" />
+                              <circle cx="14" cy="9" r="0.5" fill="currentColor" stroke="none" />
+                              <path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5" />
+                            </>
+                          ) : (
+                            <g transform={i === 2 ? "translate(24 0) scale(-1 1)" : undefined}>
+                              <ellipse cx="12.5" cy="9.5" rx="5" ry="6" />
+                              <path d="M7.9 10.6 5.7 12.5l2 .7" />
+                              <circle cx="11" cy="9" r="0.5" fill="currentColor" stroke="none" />
+                              <path d="M6.5 20c1-3.2 3.2-4.8 6.5-4.8 2.7 0 4.7 1.3 5.7 3.8" />
+                            </g>
+                          )}
+                        </svg>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {label}
+                          {done && !current ? " ✓" : ""}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={captureFromCamera}
+                    className="rounded-full bg-clay px-6 py-3 text-sm font-bold text-white hover:bg-clay-dark"
+                  >
+                    Capture photo
+                  </button>
+                  {angleStep > 0 && (
+                    <button
+                      type="button"
+                      onClick={skipSideAngles}
+                      className="rounded-full bg-white/15 px-5 py-3 text-sm font-semibold text-cream backdrop-blur transition-colors hover:bg-white/25"
+                    >
+                      Skip side angles
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="rounded-full bg-white/90 px-5 py-3 text-sm font-semibold text-forest hover:bg-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           ) : previewUrl ? (
