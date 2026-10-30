@@ -55,10 +55,8 @@ export default function ManualRoutine({ onBack }: { onBack: () => void }) {
         Tell us what bothers your skin
       </h1>
       <p className="mt-2 max-w-2xl text-ink/65">
-        The AI couldn&apos;t read your photo, so we won&apos;t invent a
-        score for you. Pick up to {MAX_PICKS} concerns instead — we&apos;ll
-        match real products from our catalog to each one, the same way the
-        scan path does, and label every pick as yours.
+        The AI couldn’t read your photo — so no score was invented.
+        Pick up to {MAX_PICKS} concerns. We match real products to each one.
       </p>
 
       {/* Concern picker */}
@@ -67,7 +65,7 @@ export default function ManualRoutine({ onBack }: { onBack: () => void }) {
           Your top concerns
         </h2>
         <p className="mt-1 text-sm text-ink/60">
-          Tap to pick — order matters: your first pick gets matched first.{" "}
+          Tap to pick. First pick matches first.{" "}
           {selected.length}/{MAX_PICKS} picked.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -136,9 +134,8 @@ export default function ManualRoutine({ onBack }: { onBack: () => void }) {
               Your matched routine
             </h2>
             <p className="mt-1 max-w-2xl text-ink/65">
-              Built from the concerns you picked — one targeted product per
-              concern, plus the cleanser, moisturizer and SPF every routine
-              needs, trimmed to your budget.
+              One targeted product per concern, plus cleanser, moisturizer
+              and SPF — trimmed to your budget.
             </p>
             <div className="mt-6">
               <RoutineBuilder
@@ -150,10 +147,8 @@ export default function ManualRoutine({ onBack }: { onBack: () => void }) {
           </section>
 
           <p className="mt-8 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink/75">
-            <strong>What&apos;s not here, on purpose:</strong> no skin
-            score, no skin age, no foundation shade match and no virtual
-            try-on — those only ever come from a real AI scan of your
-            photo, never from guesses.{" "}
+            <strong>Not here, on purpose:</strong> no score, skin age,
+            shade match or try-on — those come only from a real scan.{" "}
             <button
               type="button"
               onClick={onBack}
@@ -161,7 +156,7 @@ export default function ManualRoutine({ onBack }: { onBack: () => void }) {
             >
               Try the AI scan again
             </button>{" "}
-            whenever you have a brighter, front-facing photo.
+            
           </p>
         </>
       )}
