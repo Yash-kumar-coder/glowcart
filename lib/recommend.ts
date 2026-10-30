@@ -15,7 +15,7 @@
  */
 
 import { PRODUCTS, type Product } from "./catalog";
-import type { SkinAnalysisResult } from "./normalize";
+import { CONCERN_META, type SkinAnalysisResult } from "./normalize";
 
 export interface RoutinePick {
   product: Product;
@@ -59,9 +59,18 @@ function bestProductFor(
   return scored[0].p;
 }
 
-export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
-  const weak = result.concerns.slice(0, 3); // weakest first (already sorted)
-  const weakIds = result.concerns.slice(0, 5).map((c) => c.id);
+interface WeakConcern {
+  id: string;
+  label: string;
+  advice: string;
+}
+
+function assembleRoutine(
+  weak: WeakConcern[],
+  weakIds: string[],
+  treatmentLabel: (c: WeakConcern) => string,
+  essentialReason: (base: string, product?: Product) => string
+): RoutinePick[] {
   const used = new Set<string>();
   const picks: RoutinePick[] = [];
 
@@ -83,9 +92,12 @@ export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
     cleanser,
     "essential",
     "Essential · Cleanse",
-    cleanser
-      ? `Matched to your skin: ${cleanser.whyItMatches}`
-      : "A gentle daily cleanser is the base of every routine.",
+    essentialReason(
+      cleanser
+        ? `Matched to your skin: ${cleanser.whyItMatches}`
+        : "A gentle daily cleanser is the base of every routine.",
+      cleanser
+    ),
     0
   );
 
@@ -98,9 +110,12 @@ export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
     moisturizer,
     "essential",
     "Essential · Moisturize",
-    moisturizer
-      ? `Matched to your skin: ${moisturizer.whyItMatches}`
-      : "Locks in hydration and supports the skin barrier.",
+    essentialReason(
+      moisturizer
+        ? `Matched to your skin: ${moisturizer.whyItMatches}`
+        : "Locks in hydration and supports the skin barrier.",
+      moisturizer
+    ),
     1
   );
 
@@ -109,9 +124,12 @@ export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
     spf,
     "essential",
     "Essential · Protect",
-    spf
-      ? `Non-negotiable: ${spf.whyItMatches}`
-      : "Daily SPF protects the progress of every other step.",
+    essentialReason(
+      spf
+        ? `Non-negotiable: ${spf.whyItMatches}`
+        : "Daily SPF protects the progress of every other step.",
+      spf
+    ),
     2
   );
 
@@ -127,7 +145,7 @@ export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
     addPick(
       hero,
       concern.id,
-      `For your ${concern.label.toLowerCase()} · score ${concern.score}`,
+      treatmentLabel(concern),
       hero
         ? hero.whyItMatches
         : concern.advice,
@@ -139,6 +157,43 @@ export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
     (a, b) =>
       a.priority - b.priority ||
       STEP_ORDER[a.product.step] - STEP_ORDER[b.product.step]
+  );
+}
+
+export function buildRoutine(result: SkinAnalysisResult): RoutinePick[] {
+  const weak = result.concerns.slice(0, 3); // weakest first (already sorted)
+  const weakIds = result.concerns.slice(0, 5).map((c) => c.id);
+  const scores = new Map(result.concerns.map((c) => [c.id, c.score]));
+  return assembleRoutine(
+    weak,
+    weakIds,
+    (c) => `For your ${c.label.toLowerCase()} · score ${scores.get(c.id)}`,
+    (base) => base
+  );
+}
+
+/**
+ * Manual path: the user picked their own concerns — used when the AI scan
+ * cannot read their photo. NO scores are invented anywhere: picks are
+ * labeled as the user's own picks and reasons never claim a measurement
+ * happened. The products are the same real catalog matches the scan path
+ * would choose for those concerns.
+ */
+export function buildRoutineFromConcerns(concernIds: string[]): RoutinePick[] {
+  const weak = concernIds
+    .filter((id) => id in CONCERN_META)
+    .slice(0, 3)
+    .map((id) => ({
+      id,
+      label: CONCERN_META[id].label,
+      advice: CONCERN_META[id].advice,
+    }));
+  if (weak.length === 0) return [];
+  return assembleRoutine(
+    weak,
+    weak.map((c) => c.id),
+    (c) => `For your ${c.label.toLowerCase()} · picked by you`,
+    (base) => base.replace("Matched to your skin:", "Picked for your concerns:")
   );
 }
 
