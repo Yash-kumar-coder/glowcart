@@ -25,6 +25,8 @@ export interface Product {
   keyIngredient: string;
   /** One-line "why it matches" copy shown on the card. */
   whyItMatches: string;
+  /** Product photo (public/products). */
+  image: string;
   step: RoutineStep;
   timeOfDay: TimeOfDay;
 }
@@ -33,6 +35,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "oat-milk-cleanser",
     name: "Gentle Oat Milk Cleanser",
+    image: "/products/oat-milk-cleanser.jpg",
     brand: "Verdé Botanics",
     category: "Cleanser",
     concerns: ["redness", "moisture"],
@@ -46,6 +49,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "foaming-balance-cleanser",
     name: "Foaming Balance Cleanser",
+    image: "/products/foaming-balance-cleanser.jpg",
     brand: "Claro Lab",
     category: "Cleanser",
     concerns: ["oiliness", "pore", "acne"],
@@ -59,6 +63,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "pha-exfoliating-toner",
     name: "PHA Gentle Exfoliating Toner",
+    image: "/products/pha-exfoliating-toner.jpg",
     brand: "Solstice Skin",
     category: "Toner",
     concerns: ["texture", "pore", "radiance"],
@@ -72,6 +77,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "hydra-drench-serum",
     name: "Hydra-Drench Hyaluronic Serum",
+    image: "/products/hydra-drench-serum.jpg",
     brand: "Maison Lumière",
     category: "Serum",
     concerns: ["moisture", "texture"],
@@ -85,6 +91,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "niacinamide-serum",
     name: "Niacinamide 10% Pore-Refining Serum",
+    image: "/products/niacinamide-serum.jpg",
     brand: "Claro Lab",
     category: "Serum",
     concerns: ["pore", "oiliness", "texture"],
@@ -98,6 +105,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "vitamin-c-serum",
     name: "Vitamin C Radiance Serum",
+    image: "/products/vitamin-c-serum.jpg",
     brand: "Solstice Skin",
     category: "Serum",
     concerns: ["radiance", "age_spot", "wrinkle"],
@@ -111,6 +119,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "retinal-night-serum",
     name: "Retinal 0.1% Renewal Night Serum",
+    image: "/products/retinal-night-serum.jpg",
     brand: "Nocturne",
     category: "Serum",
     concerns: ["wrinkle", "firmness", "texture"],
@@ -124,6 +133,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "azelaic-calm-treatment",
     name: "Azelaic Acid 10% Calm Treatment",
+    image: "/products/azelaic-calm-treatment.jpg",
     brand: "Verdé Botanics",
     category: "Treatment",
     concerns: ["redness", "acne", "age_spot"],
@@ -137,6 +147,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "salicylic-blemish-gel",
     name: "Salicylic Acid 2% Blemish Gel",
+    image: "/products/salicylic-blemish-gel.jpg",
     brand: "Claro Lab",
     category: "Treatment",
     concerns: ["acne", "pore"],
@@ -150,6 +161,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "bakuchiol-oil",
     name: "Bakuchiol Smoothing Oil",
+    image: "/products/bakuchiol-oil.jpg",
     brand: "Verdé Botanics",
     category: "Treatment",
     concerns: ["wrinkle", "radiance", "texture"],
@@ -163,6 +175,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "caffeine-eye-concentrate",
     name: "Caffeine Eye Concentrate",
+    image: "/products/caffeine-eye-concentrate.jpg",
     brand: "Maison Lumière",
     category: "Eye Care",
     concerns: ["dark_circle", "eye_bag"],
@@ -176,6 +189,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "ceramide-barrier-cream",
     name: "Ceramide Barrier Cream",
+    image: "/products/ceramide-barrier-cream.jpg",
     brand: "Maison Lumière",
     category: "Moisturizer",
     concerns: ["moisture", "redness", "firmness"],
@@ -189,6 +203,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "gel-moisturizer",
     name: "Featherlight Gel Moisturizer",
+    image: "/products/gel-moisturizer.jpg",
     brand: "Claro Lab",
     category: "Moisturizer",
     concerns: ["oiliness", "acne", "moisture"],
@@ -202,6 +217,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "peptide-firming-cream",
     name: "Peptide Firming Cream",
+    image: "/products/peptide-firming-cream.jpg",
     brand: "Nocturne",
     category: "Moisturizer",
     concerns: ["firmness", "wrinkle"],
@@ -215,6 +231,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "invisible-shield-spf",
     name: "Invisible Shield SPF 50",
+    image: "/products/invisible-shield-spf.jpg",
     brand: "Solstice Skin",
     category: "SPF",
     concerns: ["age_spot", "radiance", "wrinkle"],
