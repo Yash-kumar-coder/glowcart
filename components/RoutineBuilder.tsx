@@ -69,6 +69,13 @@ export default function RoutineBuilder({
           opts.dimmed ? "border-ink/10 opacity-75" : "border-ink/10"
         }`}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={p.image}
+          alt={p.name}
+          loading="lazy"
+          className="mb-4 aspect-[4/3] w-full rounded-2xl object-cover"
+        />
         <div className="flex items-start justify-between gap-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-clay">
             {p.brand}
@@ -205,8 +212,15 @@ export default function RoutineBuilder({
           ) : (
             <ul className="mt-3 divide-y divide-ink/8">
               {cartPicks.map((pick) => (
-                <li key={pick.product.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <div className="min-w-0">
+                <li key={pick.product.id} className="flex items-center gap-3 py-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pick.product.image}
+                    alt=""
+                    loading="lazy"
+                    className="size-10 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">
                       {pick.product.name}
                     </p>
