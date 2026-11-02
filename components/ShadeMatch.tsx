@@ -246,10 +246,8 @@ export default function ShadeMatchSection({
         Your shade match
       </h2>
       <p className="mt-1 max-w-2xl text-ink/65">
-        Your selfie also went through YouCam&apos;s Skin Tone Analysis.
-        GlowCart measured your exact skin colour, matched it against the
-        foundation shade range — then lets you <em>try the shade on your own
-        face</em> before it ever reaches your cart.
+        Your exact skin colour, measured by YouCam Skin Tone Analysis —
+        matched to a shade you can <em>try on your own face</em> first.
       </p>
 
       {toneStatus === "running" && (
