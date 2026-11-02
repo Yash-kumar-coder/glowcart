@@ -129,6 +129,7 @@ export function shadeToProduct(shade: FoundationShade): Product {
     concerns: ["radiance", "texture"],
     price: shade.price,
     size: "30 ml",
+    image: "/products/foundation.jpg",
     keyIngredient: `Shade ${shade.code} · ${shade.undertone} undertone · satin finish`,
     whyItMatches: `Shade-matched to your measured skin tone and virtually tried on your own photo.`,
     step: "base",
