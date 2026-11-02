@@ -80,6 +80,7 @@ export default function ScanPage() {
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [pickError, setPickError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -172,10 +173,22 @@ export default function ScanPage() {
 
   const onFilePicked = async (file: File | null) => {
     if (!file) return;
+    // Guard messages must be VISIBLE: in the pick phase they render as an
+    // inline note (pickError); from the error card they replace the error
+    // text itself. (Setting `error` alone in pick phase showed nothing.)
+    const failPick = (msg: string) => {
+      if (phase === "error") setError(msg);
+      else setPickError(msg);
+    };
     if (!["image/jpeg", "image/png"].includes(file.type)) {
-      setError("Please choose a JPG or PNG photo.");
+      failPick("Please choose a JPG or PNG photo.");
       return;
     }
+    if (file.size > 25 * 1024 * 1024) {
+      failPick("That photo is over 25 MB — please pick a smaller one.");
+      return;
+    }
+    setPickError("");
     stopCamera();
     await acceptImage(file);
   };
@@ -630,17 +643,21 @@ export default function ScanPage() {
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="size-5"
+                  className="size-6"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.9"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden="true"
                 >
-                  <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6.1" />
-                  <path d="M18.6 2.8v4h-4" />
-                  <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                  {/* Two chasing arrows around a lens = switch camera */}
+                  <path d="M19.3 9.2A8 8 0 0 0 4.5 9.3" />
+                  <path d="M8.4 8.1 4.5 9.3l1.2 4" />
+                  <path d="M4.7 14.8A8 8 0 0 0 19.5 14.7" />
+                  <path d="M15.7 15.9l3.8-1.2-1.2-4" />
+                  <circle cx="12" cy="12" r="2.7" />
+                  <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
                 </svg>
               </button>
               {/* Face guide: shadow mask with an oval cutout, so the user
@@ -748,7 +765,7 @@ export default function ScanPage() {
                 Drop your selfie here, or click to choose
               </span>
               <span className="mt-1 text-sm text-ink/55">
-                JPG or PNG, up to 10 MB. Sent only to YouCam — never stored.
+                JPG or PNG. Sent only to YouCam — never stored.
               </span>
             </button>
           )}
@@ -767,6 +784,11 @@ export default function ScanPage() {
           {cameraError && (
             <p className="mt-3 rounded-2xl bg-clay/10 px-4 py-3 text-sm font-medium text-clay-dark" role="alert">
               {cameraError}
+            </p>
+          )}
+          {pickError && phase !== "error" && (
+            <p className="mt-3 rounded-2xl bg-clay/10 px-4 py-3 text-sm font-medium text-clay-dark" role="alert">
+              {pickError}
             </p>
           )}
           {phase === "error" && (
